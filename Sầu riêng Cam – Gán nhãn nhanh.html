@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sầu riêng Cam – Gán nhãn nhanh</title>
+  <link rel="icon" href="data:image/svg+xml;utf8,
+  <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'>
+    <rect width='128' height='128' rx='28' fill='%230b1220'/>
+    <g transform='translate(16,10)'>
+      <ellipse cx='48' cy='62' rx='42' ry='36' fill='%234ade80' stroke='%230f5132' stroke-width='6'/>
+      <path d='M46 10 L58 24 L42 24 Z' fill='%23cbd5e1' stroke='%2399aabb' stroke-width='4'/>
+      <path d='M24 54 L72 54 M24 70 L72 70' stroke='%230f5132' stroke-width='6' stroke-linecap='round'/>
+      <path d='M36 42 L36 82 M60 42 L60 82' stroke='%230f5132' stroke-width='6' stroke-linecap='round'/>
+    </g>
+  </svg>"/>
+
+  <style>
+    :root { --bg:#0b1220; --card:#121a2a; --accent:#4ade80; --muted:#94a3b8; --danger:#ef4444; }
+    *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;background:var(--bg);color:#e5e7eb}
+    .wrap{max-width:980px;margin:0 auto;padding:16px}
+    .grid{display:grid;gap:12px}
+    @media(min-width:900px){.grid{grid-template-columns:1.2fr .8fr}}
+    .card{background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:14px}
+    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    button{cursor:pointer;border:1px solid rgba(255,255,255,.08);background:#172033;color:#e5e7eb;border-radius:12px;padding:10px 14px;font-weight:600}
+    button.primary{background:var(--accent);color:#04120b;border-color:transparent}
+    button.ghost{background:transparent}
+    button.warn{background:var(--danger);color:white;border-color:transparent}
+    button.small{padding:6px 10px;border-radius:10px}
+    label{font-size:12px;color:var(--muted)}
+    input, select{background:#0d1727;border:1px solid rgba(255,255,255,.1);border-radius:10px;color:#e5e7eb;padding:9px 10px}
+    video, canvas, img{width:100%;border-radius:12px;background:#000}
+    .pill{border-radius:999px;padding:4px 10px;background:#0f172a;border:1px solid rgba(255,255,255,.08);font-size:12px;color:#cbd5e1}
+    .kbd{font-family:ui-monospace,Menlo,Consolas,monospace;background:#0b1220;border:1px solid rgba(255,255,255,.1);padding:2px 6px;border-radius:6px}
+    .list{max-height:220px;overflow:auto;border:1px dashed rgba(255,255,255,.12);padding:8px;border-radius:12px}
+    .muted{color:var(--muted)}
+    .angle{padding:6px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.1)}
+    .ok{color:#4ade80}
+  </style>
+</head>
+<body>
+  <div class="wrap grid">
+    <section class="card">
+      <div class="row" style="justify-content:space-between">
+        <h2 style="margin:6px 0">Sầu riêng Cam – Gán nhãn nhanh</h2>
+        <div class="pill">PWA – chụp & gán nhãn (offline)</div>
+      </div>
+      <video id="video" playsinline autoplay muted></video>
+      <div class="row" style="margin-top:10px">
+        <button id="btnStart" class="primary">🎥 Bật camera</button>
+        <button id="btnFlip" class="ghost">🔄 Đổi camera</button>
+        <button id="btnShot">📸 Chụp</button>
+        <button id="btnUndo" class="ghost small">↩️ Hoàn tác</button>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <div>
+          <label>Mã trái</label><br/>
+          <input id="fruitId" value="SR001" size="8" />
+          <button id="nextId" class="small">+1</button>
+        </div>
+        <div>
+          <label>Nhãn</label><br/>
+          <select id="label">
+            <!-- giá trị (value) không dấu để train, text hiển thị có dấu -->
+            <option value="dep">đẹp</option>
+            <option value="suong">sượng</option>
+            <option value="hatlep">hạt_lép</option>
+            <option value="xau">xấu</option>
+          </select>
+        </div>
+        <div>
+          <label>Góc</label><br/>
+          <div class="row">
+            <button class="small angle" data-angle="1">1</button>
+            <button class="small angle" data-angle="2">2</button>
+            <button class="small angle" data-angle="3">3</button>
+            <button class="small angle" data-angle="4">4</button>
+            <button class="small angle" data-angle="5">5</button>
+          </div>
+        </div>
+        <div>
+          <label>Tên file (auto)</label><br/>
+          <div id="fname" class="pill">SR001_dep_1.jpg</div>
+        </div>
+      </div>
+      <p class="muted">Quy ước tên: <span class="kbd">&lt;ID&gt;_&lt;label&gt;_&lt;angle&gt;.jpg</span> · Ví dụ: <span class="kbd">SR001_suong_3.jpg</span></p>
+    </section>
+
+    <section class="card">
+      <h3 style="margin-top:4px">Bộ sưu tập tạm thời</h3>
+      <div class="list" id="shots"></div>
+      <div class="row" style="margin-top:10px">
+        <button id="btnExport" class="primary">💾 Xuất ZIP (ảnh + labels.csv + cls/)</button>
+        <button id="btnClear" class="warn">🗑 Xóa tất cả</button>
+      </div>
+      <p class="muted">CSV gồm các cột: <span class="kbd">filename,id,label,angle,time</span></p>
+      <small class="muted">Tip: thêm mô tả ngắn vào cuối ID, ví dụ <span class="kbd">SR001_loi_nut</span>.</small>
+    </section>
+  </div>
+
+  <canvas id="canvas" style="display:none"></canvas>
+
+  <script>
+    // --- State ---
+    let stream; let currentDeviceId = null; let devices = []; let angle = 1;
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const shotsDiv = document.getElementById('shots');
+    const fruitId = document.getElementById('fruitId');
+    const labelSel = document.getElementById('label');
+    const fname = document.getElementById('fname');
+
+    const db = []; // {blob, filename, id, label, angle, time}
+
+    function pad(n){return String(n).padStart(3,'0')}
+    function suggestName(){ fname.textContent = `${fruitId.value}_${labelSel.value}_${angle}.jpg`; }
+
+    async function getCams(){
+      const all = await navigator.mediaDevices.enumerateDevices();
+      devices = all.filter(d=>d.kind==='videoinput');
+    }
+
+    async function startCamera(){
+      if(stream){ stream.getTracks().forEach(t=>t.stop()); }
+      await getCams();
+      // Ưu tiên cam sau nếu có
+      let constraints = { video: { facingMode: { ideal: 'environment' } } };
+      if(currentDeviceId){ constraints = { video: { deviceId: { exact: currentDeviceId } } } }
+      stream = await navigator.mediaDevices.getUserMedia(constraints);
+      video.srcObject = stream; await video.play();
+    }
+
+    async function flipCamera(){
+      await getCams();
+      if(!devices.length) return;
+      const curIdx = devices.findIndex(d=>d.deviceId===currentDeviceId);
+      const nextIdx = curIdx<0 ? 0 : (curIdx+1)%devices.length;
+      currentDeviceId = devices[nextIdx].deviceId;
+      await startCamera();
+    }
+
+    function capture(){
+      const w = video.videoWidth, h = video.videoHeight;
+      if(!w||!h){ alert('Camera chưa sẵn sàng'); return; }
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video,0,0,w,h);
+      canvas.toBlob(async (blob)=>{
+        const filename = `${fruitId.value}_${labelSel.value}_${angle}.jpg`;
+        const row = { blob, filename, id: fruitId.value, label: labelSel.value, angle, time: new Date().toISOString() };
+        db.push(row); addThumb(row); angle = Math.min(5, angle+1); suggestName();
+      }, 'image/jpeg', 0.92);
+    }
+
+    function addThumb(row){
+      const url = URL.createObjectURL(row.blob);
+      const el = document.createElement('div');
+      el.className = 'row'; el.style.marginBottom = '6px';
+      el.innerHTML = `<img src="${url}" style="width:96px;height:72px;object-fit:cover;border-radius:8px"/>`+
+        `<div style="display:flex;flex-direction:column;gap:4px">`+
+        `<div class="pill">${row.filename}</div>`+
+        `<div class="muted">${new Date(row.time).toLocaleString()}</div>`+
+        `</div>`;
+      shotsDiv.prepend(el);
+    }
+
+    function undo(){
+      const last = db.pop();
+      if(!last) return; angle = last.angle; suggestName(); shotsDiv.firstChild?.remove();
+    }
+
+    async function exportZip(){
+      if(!db.length){ alert('Chưa có ảnh'); return; }
+      // lazy-load JSZip
+      if(!window.JSZip){
+        await new Promise((res,rej)=>{
+          const s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js';
+          s.onload=res; s.onerror=()=>rej(new Error('Không tải được JSZip')); document.head.appendChild(s);
+        });
+      }
+      const zip = new JSZip();
+      const folder = zip.folder('images');
+      // thêm cấu trúc phân loại ảnh (ImageFolder)
+      const cls = {
+        dep: zip.folder('cls/dep'),
+        suong: zip.folder('cls/suong'),
+        hatlep: zip.folder('cls/hatlep'),
+        xau: zip.folder('cls/xau')
+      };
+
+      const csvHeader = 'filename,id,label,angle,time\n';
+      let csv = csvHeader;
+      for (const r of db){
+        folder.file(r.filename, r.blob);
+        // bản sao vào thư mục cls/<label>/
+        cls[r.label]?.file(r.filename, r.blob);
+        csv += `${r.filename},${r.id},${r.label},${r.angle},${r.time}\n`;
+      }
+      zip.file('labels.csv', csv);
+      const out = await zip.generateAsync({type:'blob'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(out);
+      a.download = `durian_dataset_${new Date().toISOString().slice(0,10)}.zip`;
+      a.click();
+    }
+
+    // --- UI events ---
+    document.getElementById('btnStart').onclick = startCamera;
+    document.getElementById('btnFlip').onclick = flipCamera;
+    document.getElementById('btnShot').onclick = capture;
+    document.getElementById('btnUndo').onclick = undo;
+    document.getElementById('btnExport').onclick = exportZip;
+    document.getElementById('btnClear').onclick = ()=>{ db.length=0; shotsDiv.innerHTML=''; };
+    document.getElementById('nextId').onclick = ()=>{
+      const m = fruitId.value.match(/^(\D+)(\d+)$/); if(!m){ fruitId.value+='001'; }
+      else{ fruitId.value = m[1] + pad(parseInt(m[2],10)+1); }
+      angle = 1; suggestName();
+    };
+    document.querySelectorAll('.angle').forEach(b=> b.onclick = ()=>{ angle = parseInt(b.dataset.angle,10); suggestName(); });
+    labelSel.onchange = suggestName; fruitId.oninput = suggestName; suggestName();
+
+    // --- PWA: manifest + service worker (tạo động, chạy localhost/https) ---
+    (function setupPWA(){
+      // manifest
+      const manifest = {
+        name: "Sầu riêng Cam – Gán nhãn nhanh",
+        short_name: "Sầu riêng Cam",
+        start_url: ".",
+        display: "standalone",
+        background_color: "#0b1220",
+        theme_color: "#4ade80",
+        icons: [
+          { src: document.querySelector('link[rel="icon"]').href, sizes: "192x192", type: "image/svg+xml" },
+          { src: document.querySelector('link[rel="icon"]').href, sizes: "512x512", type: "image/svg+xml" }
+        ]
+      };
+      const blob = new Blob([JSON.stringify(manifest)],{type:'application/manifest+json'});
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('link');
+      link.rel = 'manifest'; link.href = url; document.head.appendChild(link);
+
+      // service worker – cache tối giản
+      if('serviceWorker' in navigator){
+        window.addEventListener('load',()=>{
+          const sw = `
+            const CACHE = 'durian-labeler-v1';
+            self.addEventListener('install', e=>{
+              e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['./'])));
+              self.skipWaiting();
+            });
+            self.addEventListener('activate', e=>{ e.waitUntil(self.clients.claim()); });
+            self.addEventListener('fetch', e=>{
+              const req=e.request;
+              e.respondWith(
+                caches.match(req).then(r=> r || fetch(req).then(resp=>{
+                  const copy = resp.clone();
+                  if(req.method==='GET' && resp.ok){
+                    caches.open(CACHE).then(c=>c.put(req, copy));
+                  }
+                  return resp;
+                }).catch(()=>caches.match('./')))
+              );
+            });
+          `;
+          const swBlob = new Blob([sw],{type:'text/javascript'});
+          const swUrl = URL.createObjectURL(swBlob);
+          navigator.serviceWorker.register(swUrl);
+        });
+      }
+    })();
+  </script>
+</body>
+</html>
